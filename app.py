@@ -46,14 +46,14 @@ def inject_custom_css():
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         
-        /* Ensure the native Streamlit header stays visible but integrates seamlessly with our dark theme */
-        header {
-            background-color: #0E1117 !important;
-        }
-        
         /* Hide the top-right toolbar (Deploy/GitHub icons) to maintain the clean look */
         [data-testid="stToolbar"] {
             visibility: hidden !important;
+        }
+        
+        /* PERMANENT SIDEBAR UX: Hide the collapse button to prevent users from closing the sidebar */
+        [data-testid="stSidebarCollapseButton"] {
+            display: none !important;
         }
         
         /* Custom Header Styling */
