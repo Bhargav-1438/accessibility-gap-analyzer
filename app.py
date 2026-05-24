@@ -44,8 +44,32 @@ def inject_custom_css():
         
         /* Hide Streamlit branding for a cleaner app feel */
         #MainMenu {visibility: hidden;}
-        header {visibility: hidden;}
         footer {visibility: hidden;}
+        
+        /* Make header transparent to keep the dark theme seamless */
+        header {
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }
+        
+        /* Hide the top-right toolbar (Deploy/GitHub icons) to maintain the clean look */
+        [data-testid="stToolbar"] {
+            visibility: hidden !important;
+        }
+        
+        /* UX Fix & Enhancement: Style the collapsed sidebar toggle button so it is highly visible */
+        [data-testid="collapsedControl"] {
+            color: #FAFAFA !important;
+            background-color: #1A202C !important;
+            border: 1px solid #48BB78 !important;
+            border-radius: 0.4rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+        [data-testid="collapsedControl"]:hover {
+            background-color: #2D3748 !important;
+            border-color: #FAFAFA !important;
+        }
         
         /* Custom Header Styling */
         .hero-title {
