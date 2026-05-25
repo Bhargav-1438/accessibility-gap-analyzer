@@ -6,11 +6,9 @@ import osmnx as ox
 os.makedirs("data/boundaries", exist_ok=True)
 os.makedirs("data/graphs", exist_ok=True)
 
+# Temporarily restricted to Hyderabad for Railway runtime stability
 SUPPORTED_CITIES = [
-    "Hyderabad, India",
-    "Chennai, India",
-    "Bangalore, India",
-    "Pune, India"
+    "Hyderabad, India"
 ]
 
 def get_city_slug(city_name: str) -> str:
