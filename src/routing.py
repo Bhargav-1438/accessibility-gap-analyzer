@@ -4,35 +4,34 @@ import networkx as nx
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
+import streamlit as st
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Configurable parameter, hardcoded for foundational layer stability
 DEFAULT_WALKING_SPEED_KMH = 5.0
 
+@st.cache_resource
 def load_or_create_graph(city_name: str, network_type: str = "walk") -> nx.MultiDiGraph:
     """
     Loads a walkable street network graph for the given city.
-    Checks local cache first; if not found, downloads from OSM and caches it.
-    
-    Args:
-        city_name (str): The name of the city to retrieve the graph for.
-        network_type (str): Type of street network (default: 'walk').
-        
-    Returns:
-        nx.MultiDiGraph: The loaded street network graph.
+    For deployment stability, runtime downloads are permanently eliminated.
+    The system exclusively loads the precomputed pilot graph committed to the repository.
     """
     # Define cache path
     cache_dir = os.path.join("data", "graphs")
     os.makedirs(cache_dir, exist_ok=True)
     
-    # Safe filename for caching
-    safe_city_name = city_name.replace(" ", "_").replace(",", "").lower()
-    cache_path = os.path.join(cache_dir, f"{safe_city_name}_{network_type}.graphml")
+    # We strictly enforce the pilot graph for Railway stability
+    cache_path = os.path.join(cache_dir, "hyderabad_pilot.graphml")
     
     if os.path.exists(cache_path):
-        print(f"Loading cached graph from {cache_path}...")
+        logger.info("Loading cached pilot graph...")
         graph = ox.load_graphml(cache_path)
+        logger.info("Cached graph loaded successfully.")
     else:
-        print(f"Downloading {network_type} graph for {city_name} from OSM...")
+        logger.warning("Cached graph missing, generating dynamically...")
         if "Pilot Zone" in city_name:
             from src.city_manager import get_city_boundary
             boundary_gdf = get_city_boundary(city_name)
@@ -42,7 +41,7 @@ def load_or_create_graph(city_name: str, network_type: str = "walk") -> nx.Multi
         else:
             graph = ox.graph_from_place(city_name, network_type=network_type, simplify=True)
             
-        print(f"Caching graph to {cache_path}...")
+        logger.info(f"Caching generated graph to {cache_path}...")
         ox.save_graphml(graph, cache_path)
         
     return graph
