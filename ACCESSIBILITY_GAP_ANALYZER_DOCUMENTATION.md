@@ -145,3 +145,78 @@ While the platform is a fully operational decision-support system, future archit
 *   **Public Transit Routing:** Introducing General Transit Feed Specification (GTFS) data to complement the pedestrian walking networks with multimodal commute times.
 *   **Weighted Facility Costs:** Upgrading the optimization engine to account for municipal land costs and budget constraints.
 *   **Cloud-Native Scaling:** Transitioning the local `.graphml` caching layer into a distributed Redis or AWS S3 architecture for massive horizontal scaling.
+
+---
+
+## 16. Production Deployment Journey
+
+Transitioning the platform from a powerful local prototype to a production-stable cloud deployment on Railway's free-tier infrastructure (500MB RAM limit) presented severe engineering challenges. The stabilization process required deep architectural pivots:
+
+*   **Initial Build-Time Failures:** Attempting to precompute massive urban routing graphs inside the Docker build step using `precompute.py` caused timeouts and memory collapse during container compilation.
+*   **Streamlit Reactive Rerender Issues:** Streamlit's architecture natively triggers a top-to-bottom script re-execution on every UI interaction. Adjusting a slider would re-trigger a full graph analysis, instantly causing an Out-Of-Memory (OOM) kill and a 502 Bad Gateway error. We resolved this using explicit `st.form` execution gates and `st.session_state` locking.
+*   **Runtime Memory Pressure & Topology Bottlenecks:** The `osmnx.graph_from_polygon()` command dynamically constructs `NetworkX` graphs by parsing massive JSON responses from the Overpass API. This caused the memory footprint to instantly spike to ~320MB.
+*   **The Pilot-Zone Breakthrough:** To ensure baseline rendering stability, we aggressively restricted the operational scope from the 150-ward metropolis to an 8-ward Pilot Zone, mathematically clipping the OSMnx downloads.
+*   **The Precomputed GraphML Paradigm:** We permanently eliminated runtime graph generation. The system now loads a static `.graphml` file committed directly to the repository via an `@st.cache_resource` singleton, entirely neutralizing the Overpass API bottleneck.
+
+---
+
+## 17. Pilot-Zone Deployment Architecture
+
+Deploying the full 150-ward Hyderabad topology was computationally unviable for a free-tier cloud instance. To achieve a memory-safe operational deployment mode without sacrificing the underlying architectural logic, we introduced the Pilot-Zone architecture.
+
+Rather than relying on `osmnx.graph_from_place()`, the `src/city_manager.py` dynamically slices the legacy `ghmc-wards.geojson` to extract a small, central, contiguous 8-ward subset. This pilot polygon becomes the single source of truth for the entire platform. By passing the exact `unary_union` polygon coordinates directly to `osmnx.features_from_polygon()`, we bypass text-based geocoding (Nominatim) entirely, ensuring perfect alignment between the generated street graph, the clipped facilities, and the visualization layer.
+
+---
+
+## 18. Runtime Memory Engineering
+
+We engineered an aggressive "Deployment Optimization Layer" to prevent Streamlit from crashing during interactive sessions. This is not a downgrade; it is a vital adaptation for constrained cloud environments.
+
+*   **DBSCAN Amputation:** The `scikit-learn` DBSCAN clustering and subsequent Convex Hull generations were identified as secondary memory spikes. For the Railway deployment mode, DBSCAN is explicitly bypassed. 
+*   **GeoDataFrame Duplication:** Deep `.copy()` operations were minimized, and forms now securely hold state to prevent duplicate DataFrame generation.
+*   **Logging Diagnostics:** We injected `psutil` and `time` trackers directly into the `run_analysis()` pipeline to expose exact memory thresholds during `NetworkX` routing paths, allowing us to actively monitor the overhead.
+
+---
+
+## 19. Precomputed Topology Strategy
+
+This is the most critical architectural update for deployment survivability. Real-time topology extraction from OpenStreetMap is unpredictable, latency-prone, and highly memory-intensive.
+
+*   **Local Generation Workflow:** A dedicated `generate_pilot_graph.py` script is executed strictly on the developer's local machine. It uses the pilot polygon to download and compile the `NetworkX` walking graph.
+*   **GraphML Artifacts:** The resulting `hyderabad_pilot.graphml` file is committed directly to the Git repository.
+*   **Runtime Disk Loading:** In production, the `routing.py` module no longer executes `ox.graph_from_polygon()`. It instantly loads the local XML structure into memory.
+*   **Singleton Caching:** Using `@st.cache_resource`, the massive graph object is held as a persistent global singleton across all Streamlit sessions, ensuring zero redundant memory allocation and achieving near-instantaneous baseline choropleth rendering.
+
+---
+
+## 20. Final Architecture State
+
+The operational stack represents a mature, institutional-grade civic-tech infrastructure system:
+
+*   **Frontend UI:** Streamlit (Form-gated, session-persistent, reactive)
+*   **API Gateway:** FastAPI (Headless JSON intelligence extraction)
+*   **Spatial Operations:** GeoPandas & Shapely (Polygon clipping, CRS conversion)
+*   **Topology Engine:** OSMnx & NetworkX (Topological routing, ego-graph traversal)
+*   **Machine Learning:** Scikit-learn (DBSCAN desert discovery, vectorized k-d trees)
+*   **Topology Storage:** Precomputed `.graphml` caching
+*   **Hosting:** Dockerized container architecture deployed on Railway
+
+---
+
+## 21. Operational Modes
+
+The platform supports two distinct architectural modes, defined by their compute environments:
+
+*   **Research Mode (Local Execution):** Executes the full metropolitan analysis. Supports full `scikit-learn` DBSCAN infrastructure desert discovery, complete True Greedy optimization permutations, multi-city topology generation, and dynamic Overpass API communication.
+*   **Deployment Mode (Railway Hosted):** Executes the memory-safe Pilot-Zone. Relies entirely on the `@st.cache_resource` precomputed topology. DBSCAN is disabled, optimization candidates are aggressively restricted, and the UX is heavily gated behind forms to protect the server from OOM crashes.
+
+---
+
+## 22. Final System Status
+
+The **Accessibility Gap Analyzer** is officially:
+*   **Live-Deployed**
+*   **Topology-Aware**
+*   **Memory-Stabilized**
+*   **Railway-Operational**
+*   **Institution-Ready**
