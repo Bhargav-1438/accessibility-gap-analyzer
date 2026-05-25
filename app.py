@@ -34,13 +34,29 @@ def get_facilities(city_name):
 
 @st.cache_data
 def run_analysis(city_name, _zones_gdf, _hospitals_gdf, _schools_gdf):
-    logger.info("Executing heavy network analysis and clustering...")
+    import time
+    import psutil
+    import os
+    
+    process = psutil.Process(os.getpid())
+    start_time = time.time()
+    logger.info(f"[MEM: {process.memory_info().rss / 1024 / 1024:.2f} MB] Executing heavy network analysis...")
+    
     zones_with_distances = calculate_network_distances(city_name, _zones_gdf, _hospitals_gdf, _schools_gdf)
+    logger.info(f"[MEM: {process.memory_info().rss / 1024 / 1024:.2f} MB] Routing completed in {time.time() - start_time:.2f}s")
+    
     scored_zones = calculate_gap_score(zones_with_distances)
-    clustered_zones = cluster_underserved_zones(scored_zones, score_threshold=60.0)
-    cluster_hulls = generate_cluster_hulls(clustered_zones)
-    logger.info("Analysis complete.")
-    return scored_zones, cluster_hulls
+    
+    # TEMPORARY RAILWAY DEPLOYMENT OVERRIDE: Disable DBSCAN entirely
+    logger.info("Railway Override: Skipping DBSCAN clustering and convex hull generation to prevent OOM crash.")
+    clustered_zones = scored_zones.copy()
+    # Add a dummy cluster_id column so mapping doesn't break if it expects one
+    if 'cluster_id' not in clustered_zones.columns:
+        clustered_zones['cluster_id'] = -1
+    cluster_hulls = None
+    
+    logger.info(f"[MEM: {process.memory_info().rss / 1024 / 1024:.2f} MB] Analysis pipeline finalized.")
+    return clustered_zones, cluster_hulls
 
 # ----------------------------------------
 
