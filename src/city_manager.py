@@ -6,9 +6,9 @@ import osmnx as ox
 os.makedirs("data/boundaries", exist_ok=True)
 os.makedirs("data/graphs", exist_ok=True)
 
-# Temporarily restricted to Hyderabad for Railway runtime stability
+# Temporarily restricted to Pilot Zone for Railway free-tier runtime stability
 SUPPORTED_CITIES = [
-    "Hyderabad, India"
+    "Hyderabad Pilot Zone"
 ]
 
 def get_city_slug(city_name: str) -> str:
@@ -23,10 +23,16 @@ def get_city_boundary(city_name: str) -> gpd.GeoDataFrame:
     city_slug = get_city_slug(city_name)
     filepath = f"data/boundaries/{city_slug}.geojson"
     
-    # Special fallback for Hyderabad to use the legacy wards file if it exists and the slug file doesn't
-    legacy_hyd_file = "data/boundaries/ghmc-wards.geojson"
-    if city_name == "Hyderabad, India" and not os.path.exists(filepath) and os.path.exists(legacy_hyd_file):
-        return gpd.read_file(legacy_hyd_file)
+    # Generate Pilot Zone from legacy ghmc-wards to strictly limit execution size
+    if city_name == "Hyderabad Pilot Zone" and not os.path.exists(filepath):
+        legacy_hyd_file = "data/boundaries/ghmc-wards.geojson"
+        if os.path.exists(legacy_hyd_file):
+            print("Slicing GHMC wards to create lightweight Pilot Zone...")
+            gdf = gpd.read_file(legacy_hyd_file)
+            # Take a small central contiguous slice (e.g., 8 wards) for stable Railway execution
+            pilot_gdf = gdf.head(8).copy()
+            pilot_gdf.to_file(filepath, driver="GeoJSON")
+            return pilot_gdf
     
     if os.path.exists(filepath):
         try:

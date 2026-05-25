@@ -116,7 +116,7 @@ def main():
             if auto_suggest_mode:
                 with st.form("optimize_form"):
                     opt_facility_type = st.selectbox("Facility to Optimize", options=["hospital", "school"])
-                    opt_count = st.slider("Number of Interventions", min_value=1, max_value=5, value=3)
+                    opt_count = st.slider("Number of Interventions", min_value=1, max_value=2, value=1)
                     run_optimization = st.form_submit_button("Run Optimization Engine")
             else:
                 st.session_state.recommendations = None
@@ -203,8 +203,9 @@ def main():
             with st.spinner("Generating walksheds for simulation..."):
                 isochrones_list.append(generate_isochrones(city_name, lat, lon))
         elif auto_suggest_mode and st.session_state.recommendations:
-            with st.spinner("Generating walksheds for AI recommendations..."):
-                for rec in st.session_state.recommendations:
+            with st.spinner("Generating walksheds for top AI recommendation (memory protected)..."):
+                # Restrict memory overhead by only generating coverage for the #1 ranked recommendation
+                for rec in st.session_state.recommendations[:1]:
                     isochrones_list.append(generate_isochrones(city_name, rec['lat'], rec['lon']))
                     
     final_isochrones = pd.concat(isochrones_list, ignore_index=True) if isochrones_list else None

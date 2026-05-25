@@ -5,7 +5,7 @@ from shapely.geometry import Point, MultiPoint
 import pandas as pd
 from src.routing import load_or_create_graph
 
-def generate_isochrones(city_name: str, lat: float, lon: float, walk_mins: list = [5, 10, 15, 30], speed_kmh: float = 5.0) -> gpd.GeoDataFrame:
+def generate_isochrones(city_name: str, lat: float, lon: float, walk_mins: list = [5, 15], speed_kmh: float = 5.0) -> gpd.GeoDataFrame:
     """
     Generates network-constrained walkable service areas (isochrones) for a given facility location.
     

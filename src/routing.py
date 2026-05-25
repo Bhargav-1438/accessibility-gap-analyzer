@@ -33,9 +33,15 @@ def load_or_create_graph(city_name: str, network_type: str = "walk") -> nx.Multi
         graph = ox.load_graphml(cache_path)
     else:
         print(f"Downloading {network_type} graph for {city_name} from OSM...")
-        # Download graph
-        graph = ox.graph_from_place(city_name, network_type=network_type)
-        # Cache graph
+        if "Pilot Zone" in city_name:
+            from src.city_manager import get_city_boundary
+            boundary_gdf = get_city_boundary(city_name)
+            # Use unary_union to get a single bounding polygon for the pilot zone wards
+            polygon = boundary_gdf.geometry.unary_union
+            graph = ox.graph_from_polygon(polygon, network_type=network_type, simplify=True)
+        else:
+            graph = ox.graph_from_place(city_name, network_type=network_type, simplify=True)
+            
         print(f"Caching graph to {cache_path}...")
         ox.save_graphml(graph, cache_path)
         
