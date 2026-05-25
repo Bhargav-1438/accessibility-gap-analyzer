@@ -16,6 +16,6 @@ COPY . .
 
 # Precompute OSM graphs for zero cold-start latency
 # This embeds the core city graphs into the Docker image itself.
-RUN python precompute.py
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
 
 EXPOSE 8000 8501
