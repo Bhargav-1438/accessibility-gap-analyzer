@@ -6,3 +6,5 @@ shapely
 osmnx
 pandas
 numpy
+networkx
+scikit-learn
