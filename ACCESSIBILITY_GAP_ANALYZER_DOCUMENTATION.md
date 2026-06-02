@@ -212,11 +212,34 @@ The platform supports two distinct architectural modes, defined by their compute
 
 ---
 
-## 22. Final System Status
+## 23. Responsive UX & Mobile Stabilization Layer
+
+Once the core algorithmic intelligence and Railway deployment layers were stabilized, the platform transitioned from a desktop-only research prototype into a publicly deployed decision-support tool. This shift necessitated robust cross-device usability, as civic stakeholders frequently access intelligence dashboards directly from mobile devices.
+
+Deploying Streamlit and Folium for mobile browsers introduced several critical UI challenges:
+*   **Streamlit Sidebar Overflow:** The deep configuration controls and form-gated elements stacked awkwardly, leading to horizontal overflow and extreme scrolling fatigue.
+*   **Folium Scroll-Traps:** A standard 700px Folium iframe on a mobile screen consumes 100% of the viewport, trapping the user in map zoom gestures and preventing vertical page scrolling.
+*   **Typography Scaling:** Desktop-calibrated titles (`2.75rem`) and metric indicators broke layout boundaries on smaller screens.
+*   **Visibility Constraints:** Crucial dark-mode control labels (checkboxes, select boxes, toggles) lacked the high-contrast legibility required for outdoor mobile usage.
+
+To solve this without jeopardizing the hard-won memory safety of the Railway infrastructure, we engineered a **Deployment-Safe CSS Injection Philosophy**. Rather than introducing heavy JavaScript frontend frameworks (e.g., React/Vue) which would fracture the monolithic Streamlit architecture and drastically increase server-side processing overhead, we implemented a lightweight, pure-CSS media-query strategy (`@media (max-width: 768px)`).
+
+*   **Intelligent Viewport Scaling:** Typography and metric cards scale down dynamically, and horizontal overflow bounds are aggressively restricted.
+*   **Map Height Reduction:** The Folium canvas is explicitly constrained to `500px` on mobile layouts, ensuring sufficient viewport padding exists above and below the iframe for safe vertical touch-scrolling.
+*   **Touch-Friendly UX:** The sidebar collapse mechanics were re-enabled for mobile, expander padding was compressed, and button hit-targets were expanded to `3rem` to support thumb interactions.
+*   **High-Contrast Dark Mode:** Injected specific high-contrast white `#FFFFFF` overrides for all functional UI labels to ensure perfect readability.
+
+This responsive stabilization layer acts as a perfect complement to the deployment architecture: it transforms the platform into a modern, production-grade web application entirely on the client-side browser, requiring absolutely zero additional compute overhead from the constrained Railway server.
+
+---
+
+## 24. Final System Status
 
 The **Accessibility Gap Analyzer** is officially:
 *   **Live-Deployed**
 *   **Topology-Aware**
 *   **Memory-Stabilized**
+*   **Mobile-Responsive**
+*   **Cross-Device Deployment Ready**
 *   **Railway-Operational**
 *   **Institution-Ready**

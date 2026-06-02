@@ -63,19 +63,63 @@ def run_analysis(city_name, _zones_gdf, _hospitals_gdf, _schools_gdf):
 def inject_custom_css():
     st.markdown("""
         <style>
+        /* Base Theme */
         .stApp { background-color: #0E1117; color: #FAFAFA; }
         [data-testid="stSidebar"] { background-color: #161B22; border-right: 1px solid #2D3748; }
         #MainMenu {visibility: hidden;} footer {visibility: hidden;}
         [data-testid="stToolbar"] { visibility: hidden !important; }
         [data-testid="stSidebarCollapseButton"] { display: none !important; }
+        
+        /* Typography */
         .hero-title { font-size: 2.75rem; font-weight: 800; margin-bottom: 0.5rem; color: #FFFFFF; font-family: 'Inter', sans-serif; letter-spacing: -0.02em; }
         .hero-subtitle { font-size: 1.1rem; color: #A0AEC0; margin-bottom: 2rem; font-family: 'Inter', sans-serif; max-width: 800px; }
         .status-badge { background-color: rgba(72, 187, 120, 0.15); color: #48BB78; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; display: inline-block; margin-bottom: 1rem; border: 1px solid rgba(72, 187, 120, 0.3); }
+        
+        /* Metric Cards */
         div[data-testid="stMetric"] { background-color: #1A202C; border: 1px solid #2D3748; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease; }
         div[data-testid="stMetricValue"] { font-size: 2.2rem; font-weight: 700; color: #FFFFFF; }
         div[data-testid="stMetricLabel"] { color: #A0AEC0; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 0.5rem; }
+        
+        /* Map Section */
         .map-section-header { font-size: 1.5rem; font-weight: 600; margin-top: 3rem; margin-bottom: 1.5rem; color: #E2E8F0; border-bottom: 1px solid #2D3748; padding-bottom: 0.75rem; }
         .stSpinner > div > div { border-top-color: #48BB78 !important; }
+
+        /* High-Contrast UI for Dark Mode Controls */
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] .stWidgetLabel p,
+        [data-testid="stSidebar"] .stCheckbox p,
+        [data-testid="stSidebar"] .stToggle p {
+            color: #F7FAFC !important;
+            font-weight: 500 !important;
+        }
+        div[data-testid="stExpander"] details summary p {
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+        }
+
+        /* --- MOBILE RESPONSIVE ENGINEERING --- */
+        @media (max-width: 768px) {
+            /* 1. Layout Engineering: Fix horizontal overflow and excess padding */
+            .block-container { padding-top: 1.5rem !important; padding-left: 1rem !important; padding-right: 1rem !important; max-width: 100vw !important; overflow-x: hidden; }
+            
+            /* 2. Typography Scaling: Reduce oversized headings */
+            .hero-title { font-size: 1.8rem; }
+            .hero-subtitle { font-size: 0.95rem; margin-bottom: 1.5rem; }
+            .map-section-header { font-size: 1.25rem; margin-top: 2rem; margin-bottom: 1rem; }
+            
+            /* 3. Metric Cards: Compress for stacking */
+            div[data-testid="stMetric"] { padding: 1rem; margin-bottom: 0.5rem; }
+            div[data-testid="stMetricValue"] { font-size: 1.75rem; }
+            
+            /* 4. Sidebar UX: Touch-friendly buttons and condensed expanders */
+            [data-testid="stSidebar"] { min-width: 100vw !important; } /* Full width sidebar on mobile */
+            [data-testid="stSidebarCollapseButton"] { display: flex !important; } /* Re-enable collapse specifically for mobile to free viewport */
+            .stButton > button { min-height: 3rem; font-weight: 600; margin-top: 0.25rem; } /* Touch targets */
+            div[data-testid="stExpander"] details summary { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+            
+            /* Prevent sliders and toggles from clipping */
+            .stSlider { padding-bottom: 0.5rem; }
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -262,7 +306,8 @@ def main():
             with st.spinner("Rendering map..."):
                 m = create_map(filtered_zones, display_hospitals, display_schools, cluster_hulls_gdf=cluster_hulls, recommendations=st.session_state.recommendations, isochrones_gdf=final_isochrones)
         
-        map_data = st_folium(m, use_container_width=True, height=700, returned_objects=["last_clicked"] if _sim_mod else [])
+        # Reduced height to 500 to prevent scroll-trapping on mobile devices while maintaining visual quality
+        map_data = st_folium(m, use_container_width=True, height=500, returned_objects=["last_clicked"] if _sim_mod else [])
         
         if _sim_mod and map_data and map_data.get("last_clicked"):
             lat, lon = map_data["last_clicked"]["lat"], map_data["last_clicked"]["lng"]
