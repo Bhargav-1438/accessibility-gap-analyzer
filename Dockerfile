@@ -14,8 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt fastapi uvicorn pydantic
 
 COPY . .
 
-# Precompute OSM graphs for zero cold-start latency
-# This embeds the core city graphs into the Docker image itself.
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+EXPOSE 8501
 
-EXPOSE 8000 8501
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
